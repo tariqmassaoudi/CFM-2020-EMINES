@@ -6,23 +6,17 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-    <img src="readme_images/logo.png" alt="Logo" width="80" height="80">
+    <img src="https://challengedata.ens.fr/logo/public/CFM_CoRGB_300dpi_Tight_box.png" alt="Logo" width="200" height="200">
 
-  <h3 align="center">Two Subs</h3>
+  <h3 align="center">CFM CHALLENGE 2020</h3>
 
   <p align="center">
-    A chrome extension to insert two subtitles simultaneously to a video. Integrates with an Japanese/English Anime Subtitles search engine for convenient Japanese language learning. 
+    Predicting where will the next trade take place, using machine learning
     <br />
-    <a href="https://github.com/tariqmassaoudi/two-subs/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/tariqmassaoudi/two-subs/issues">Request Feature</a>
+    <a href="https://challengedata.ens.fr/challenges/40">Challenge Link</a>
   </p>
 
 </div>
-<div><p align="center">
-<img  src="https://user-images.githubusercontent.com/52799665/226169357-4d1905f4-859e-49d5-911d-b564c33c60f7.png" width="600" height="400">
-</p>
-    </div>
 
 
 <!-- TABLE OF CONTENTS -->
@@ -30,20 +24,15 @@
   <summary>Table of Contents</summary>
   <ol>
     <li>
-      <a href="#demo-video">Demo Video</a>
+      <a href="#challenge-context">Challenge Context</a>
     </li>
-      <li><a href="#general-use-case">General Use Case</a></li>
+      <li><a href="#challenge-goals">Challenge Gaols</a></li>
     <li>
-      <a href="#japanese-learning-use-case-instructions">Japanese Learning Use Case Instructions</a>
+      <a href="#data-description">Data Description</a>
     </li>
-    <li><a href="#installation">Installation</a></li>
-     <li><a href="#installation">Developement</a></li>
-     <li><a href="#features">Features</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#running-notebook">Running The Notebook</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
 
@@ -52,92 +41,78 @@
 
 
 
-## Demo Video
+## Challenge Context
 
-https://user-images.githubusercontent.com/52799665/226168304-1ec7cf8d-3343-4d5c-8579-40479af9c4ce.mp4
-<!-- GETTING STARTED -->
-## General Use Case
+Most financial markets use an electronic trading mechanism called a limit order book to facilitate the trading of assets (stocks, futures, options, etc.). Participants submit (or cancel) orders to this electronic order book. These orders are requests to buy or sell a given quantity of an asset at a specified price, thus allowing buyers to be matched with sellers at a mutually agreed price [1][2]. Since an asset can be traded on multiple trading venues, participants can choose to which venue they send an order. For instance, a US stock can be traded on various exchanges, such as NYSE, NASDAQ, Direct Edge or BATS. When sending an order, participants generally select the best available trading venue at that time [3]. Their decisions may include a statistical analysis of past venue activity.
 
-* Load subtitles in your native language and target language you want to learn to a video.
-* You can find subtitles for most content on Open Subtitles or Yify Subtitles. 
-* Look for an on hover dictionnary chrome extension that supports your target language.
+## Challenge Goals
 
+Given recent trades and order books from a set of trading venues, predict on which trading venue the next trade will be executed.
 
-## Japanese Learning Use Case Instructions
+## Data Description
 
-* Set up Yomichan, follow instructions here: https://learnjapanese.moe/yomichan/
-* Find your favorite anime.
-* Look up subtitles in the integrated anime subs search, if you can't find them look on the web.
-* Load the subtitles and watch, whenever you encounter a word you can't understand, press "shift" and hover over it to see definition. 
-
-### Installation
-
-
-1. Clone or download the repo to your local machine.
-2. Open chrome and go to chrome://extensions/ , enable developer mode and click Load unpacked.
- <img src="readme_images/installexplanation.png"/>
-4. From the repo you downloaded select the build folder.
- <img src="readme_images/folderselect.png"/>
-
-
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-### Developement
-
+The dataset is stored in an HDF5 file and can be loaded with pandas by running the following command:
 ```
-git clone https://github.com/tariqmassaoudi/two-subs
-cd two-subs
-npm install
-npm start
+>>> train_data = pandas.read_hdf("train_data.h5", 'data')
 ```
+Labels are stored in a CSV file and can be loaded as follows:
+```
+>>> labels = pandas.read_csv("train_labels.csv")
+```
+Description of rows in the dataset
+For each row, we want predict on which venue the next trade will be executed. The stock is represented by a randomized stock_id and the day by a randomized day_id.
 
+Each row provides a description of six order books, from six trading venues, and a history of trades for the corresponding asset.
+
+Order books
+An order book lists the quantities of an asset that are currently on offer by sellers (who ask for higher prices) and the quantities that buyers wish to acquire (who bid at lower prices). The six order books (one for each trading venue) are described in the dataset through the best two bids and best two asks (which makes them respectively the two highest bid prices of the buyers and the two lowest ask prices of the sellers).
+
+We call aggregate volume the sum of all quantities on both the bid and ask sides (only considering the best two bids and best two asks) in the six given books.
+
+We also define the aggregate mid-price as the average of the best bid among the six books (i.e. the maximum of the best six bids) and the best ask among the six books (i.e. the minimum of the best six asks).
+
+Each of the six books is described as follows:
+
+The 'bid' column (respectively 'ask') represents the difference between the best bid (respectively best ask) and the aggregate mid-price, expressed in some fixed currency unit.
+
+The 'bid1' column (respectively 'ask1') represents the difference between the second best bid (respectively second best ask) and the aggregate mid-price, expressed in some fixed currency unit.
+
+The 'bid_size' column (respectively 'ask_size') represents the total number of stocks available at the best bid (respectively best ask) divided by the aggregate volume.
+
+The 'bid_size1' column (respectively 'ask_size1') represents the total number of stocks available at the second best bid (respectively at the second best ask) divided by the aggregate volume.
+
+The 'ts_last_update' column corresponds to the timestamp, given as a number of microseconds since midnight (local time), of the last update of the book.
+
+A NAN value indicates an empty book or a partially empty book.
+
+Note that all prices are expressed in the same fixed currency unit.
+
+Besides, since all the trading venues belong to the same time zone, all the timestamps have the same time reference.
+
+Trades
+Each row also comprises a description of the ten last trades (ordered from the most recent one to the oldest one) for the corresponding asset. A trade represents a transaction of a certain quantity of an asset at a given price between a buyer and a seller. Most trade result from the matching of an order in an order book with an incoming order but they can also result from a different trading mechanism such as auctions. Trades often involve fees, paid by the buyer and the seller, which vary from one trading venue to another. The ten trades from the history of trades are given are described as follows:
+
+Its quantity ('qty'): the number of stocks traded, divided by the aggregate volume (defined above in the section "Order book").
+
+Its timestamp ('tod'): when the trade was executed, given as a number of microseconds since midnight (local time).
+
+Its price ('price'), representing the difference between the trade price with the aggregate mid-price (defined in the section "Order book"), expressed in some fixed currency unit.
+
+Its source ('source_id') representing the trading venue on which this particular trade was executed.
+
+Description of labels
+The labels correspond to the trading venues to predict. Each of the six trading venues is represented by a number between 0 and 5.
+
+### Running The Notebook
+
+
+1. To download the data go to : https://challengedata.ens.fr/challenges/40 , create an account and download the data.
+2. Install the packages, recommended to use a virtual environment.
+```
+pip install -r requirements.txt
+```
+3. Open the notebook
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- USAGE EXAMPLES -->
-## Features
-
-* Add two subtitles simultaneously.
-* Subtitles are selectable so can be used with external on hover dictionnary.
-* Automatically pauses when you hover over substitles, automatically resumes when you exit hover.
-* Integrated anime JP/ENG subtitles search
-* Customize subtitle size, visibility, position and fix sync problems.
-
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- ROADMAP -->
-## Roadmap
-
-- [x] Release v1.0.0
-- [ ] Look for and fix bugs
-- [ ] Add more features
-
-
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- CONTRIBUTING -->
-## Contributing
-
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- LICENSE -->
 ## License
@@ -157,18 +132,6 @@ Personal Website: [Tariq Massaoudi](https://tariqmassaoudi.com)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
-<!-- ACKNOWLEDGMENTS -->
-## Acknowledgments
-
-Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
-
-* [Movie Subtitles](https://github.com/gignupg/Movie-Subtitles) for the base code.
-* [Kitsunekko](https://kitsunekko.net/) for anime subtitles collection.
-
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
