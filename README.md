@@ -30,7 +30,7 @@
     <li>
       <a href="#data-description">Data Description</a>
     </li>
-    <li><a href="#running-notebook">Running The Notebook</a></li>
+    <li><a href="#running-the-notebook">Running The Notebook</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
   </ol>
